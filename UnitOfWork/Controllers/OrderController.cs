@@ -26,23 +26,23 @@ namespace UnitOfWorkAPI.Controllers
         [HttpPost()]
         public async Task<ActionResult> New(OrderRequest orderRequest) 
         {
-            if (orderRequest.CutomerId == null)
+            if (orderRequest.Customer == null || orderRequest.Customer.Name.Equals(""))
             {
                 throw new Exception("Customer not found");
             }
 
-            var customer = await customerRepository.Get(orderRequest.CutomerId);
+            var customer = new Customer() 
+            {
+                Name = orderRequest?.Customer.Name
+            };
+            await customerRepository.Save(customer);
 
-            await orderRepository.Save(new Order() {
+            var order = new Order()
+            {
                 Customer = customer,
                 Number = orderRequest.Number,
-            });
-
-            /*
-             * Poderiam ocorrer várias operações nos repositórios antes de haver o commit,
-             * caso alguma dessas operações dispare uma exception, o fluxo da aplicaxão não chegará 
-             * ao commit fazendo assim que um roolback por falta de commit ocorra.
-             */
+            };
+            await orderRepository.Save(order);
 
             unitOfWork.Commit();
 
@@ -52,12 +52,11 @@ namespace UnitOfWorkAPI.Controllers
         [HttpPut("{id}/Update")]
         public async Task<ActionResult> Update(Guid id, OrderRequest orderRequest)
         {
-            if (orderRequest.CutomerId == null)
+            if (orderRequest.Customer == null || orderRequest.Customer.Name.Equals(""))
             {
-                throw new Exception("Customer not found");    
+                throw new Exception("Customer not found");
             }
 
-            var customer = await customerRepository.Get(orderRequest.CutomerId);
             var order = await orderRepository.Get(id);
 
             if (order == null) 
@@ -66,7 +65,7 @@ namespace UnitOfWorkAPI.Controllers
             }
 
             order.Number = orderRequest.Number;
-            order.Customer = customer;
+            order.Customer.Name = orderRequest.Customer.Name;
 
             await orderRepository.Update(order);
 

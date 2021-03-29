@@ -19,25 +19,23 @@ namespace Infra.Repositories
         }
         public async Task<Order> Get(Guid id)
         {
-            return await _dataContext.Orders.Where(x => x.Id == id).FirstOrDefaultAsync();
+            return await _dataContext.Orders.Include(x => x.Customer).Where(x => x.Id == id).FirstOrDefaultAsync();
         }
 
         public async Task<IEnumerable<Order>> List()
         {
-            return await _dataContext.Orders.ToListAsync();
+            return await _dataContext.Orders.Include(x => x.Customer).ToListAsync();
         }
 
         public Task Update(Order order)
         {
             _dataContext.Orders.Update(order);
-            _dataContext.SaveChanges();
             return Task.CompletedTask;
         }
 
         Task IOrderRepository.Save(Order order)
         {
             _dataContext.Orders.Update(order);
-            _dataContext.SaveChanges();
             return Task.CompletedTask;
         }
     }
